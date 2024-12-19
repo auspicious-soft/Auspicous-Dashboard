@@ -436,8 +436,8 @@ export const dashboardOverviewstatservice = async (payload: any, res: Response) 
 
 
 export const dashboardchartstatservice = async (payload: any, res: Response) => {
+    const { month, year } = payload;
 
-    const { month, year } = payload; 
     const currentDate = new Date();
     const targetMonth = month ? month - 1 : currentDate.getMonth(); 
     const targetYear = year ? year : currentDate.getFullYear();
@@ -453,6 +453,8 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
         }
     }).select("_id amount");
 
+    // Calculate totalBidsAmountThisMonth safely
+    const totalBidsAmountThisMonth = bidsThisMonth.length > 0 ? parseFloat(bidsThisMonth[0].amount) : 0;
 
     // Count the total number of leads (responses) for the selected month and year
     const totalresponses = await leadModel.countDocuments({
@@ -471,15 +473,11 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
         }
     });
 
-    const totalBidsAmountThisMonth = parseFloat(bidsThisMonth[0].amount);
-
     // Calculate response rate (number of bids / total responses) * 100
     const responserate = totalBidsAmountThisMonth > 0 ? (totalresponses / totalBidsAmountThisMonth) * 100 : 0;
 
     // Calculate hiring rate (number of projects hired / total responses) * 100
     const hiringrate = totalresponses > 0 ? (projecthired / totalresponses) * 100 : 0;
-
-
 
     // Prepare response data
     const response = {
