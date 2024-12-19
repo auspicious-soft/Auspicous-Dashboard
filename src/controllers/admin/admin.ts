@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { formatZodErrors } from "../../validation/format-zod-errors";
-import { loginService, newPassswordAfterOTPVerifiedService, forgotPasswordService, getAllUsersService, getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService } from "../../services/admin/admin-service";
+import { loginService, newPassswordAfterOTPVerifiedService, forgotPasswordService, getAllUsersService, getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService, createbidService, updateABidService, dashboardOverviewstatservice, dashboardchartstatservice} from "../../services/admin/admin-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { z } from "zod";
@@ -88,6 +88,50 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     try {
         const response = await getDashboardStatsService(req, res)
         return res.status(httpStatusCode.OK).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+
+
+export const createbid = async (req: Request, res: Response) => {
+    try {
+        const response = await createbidService({currentUser : (req as any).currentUser, ...req.body}, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+
+export const updateAbid = async (req: Request, res: Response) => {
+    try {
+        const response = await updateABidService(req.params.id, req.body, res);
+        return res.status(httpStatusCode.OK).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+
+export const dashboardOverviewstat = async (req: Request, res: Response) => {
+    try {
+        const response = await dashboardOverviewstatservice({currentUser : (req as any).currentUser, ...req.body}, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+export const dashboardchartstat = async (req: Request, res: Response) => {
+    try {
+        const response = await dashboardchartstatservice({currentUser : (req as any).currentUser, ...req.body}, res)
+        return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });

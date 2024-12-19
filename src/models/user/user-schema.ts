@@ -1,6 +1,6 @@
-import mongoose, { Schema } from "mongoose"
+import { Schema, model } from "mongoose";
 
-const usersSchema = new mongoose.Schema({
+const usersSchema = new Schema({
     identifier: {
         type: String,
         // required: true,
@@ -28,13 +28,16 @@ const usersSchema = new mongoose.Schema({
     phoneNumber: {
         type: String,
     },
-    planType:  {
-        type: String,
-        
-    },
     profilePic:  {
         type: String,
         default: null 
+    },
+    desigination:  {
+        type: String,
+        default: null 
+    },
+    technology:  {
+        type: Schema.Types.ObjectId, required: true, ref: "technologies"
     },
     address: { 
         type: String,
@@ -42,4 +45,5 @@ const usersSchema = new mongoose.Schema({
     },
 }, { timestamps: true })
 
-export const usersModel = mongoose.model("users", usersSchema)
+
+export const usersModel = model("users", usersSchema)

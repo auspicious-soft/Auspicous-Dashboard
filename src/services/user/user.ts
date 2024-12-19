@@ -34,7 +34,7 @@ export const signupService = async (payload: any, res: Response) => {
     //     }
     // }
     new usersModel({ ...payload, email: payload.email.toLowerCase().trim() }).save()
-    return { success: true, message: "Client signup successfull" }
+    return { success: true, message: "user signup successfull" }
 }
 
 export const loginService = async (payload: any, res: Response) => {

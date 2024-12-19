@@ -6,6 +6,7 @@ export const clientSignupSchema = z.object({
     fullName: z.string().min(1),
     phoneNumber: z.string().min(1),
     referralCode: z.string().optional(),
+    technology: z.string().optional()
 }).strict({
     message: "Bad payload present in the data"
 });
@@ -18,7 +19,8 @@ export const clientEditSchema = z.object({
     state: z.string().min(1),
     homeAddress: z.string().min(1),
     profilePic: z.string().min(1),
-    phoneNumber: z.string().min(1)
+    phoneNumber: z.string().min(1),
+    technology: z.string().min(1)
 }).strict({
     message: "Bad payload present in the data"
 }).partial()

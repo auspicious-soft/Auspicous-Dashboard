@@ -9,6 +9,12 @@ import { generatePasswordResetToken, getPasswordResetTokenByToken, generatePassw
 import { generatePasswordResetTokenByPhoneWithTwilio } from "../../utils/sms/sms"
 import { passwordResetTokenModel } from "src/models/password-token-schema";
 import { usersModel } from "src/models/user/user-schema";
+import { platformModel } from "src/models/platform/platform-schema";
+import { targetModel } from "src/models/target/target-schema";
+import { technologyModel } from "src/models/technology/technology-schema";
+import { leadModel } from "src/models/lead-schema";
+import { statusModel } from "src/models/status-schema";
+import { bidModel } from "src/models/totalbids-schema";
 
 export const loginService = async (payload: any, res: Response) => {
     const { username, password } = payload;
@@ -199,25 +205,291 @@ export const deleteAUserService = async (id: string, res: Response) => {
 
 
 // Dashboard
+
 export const getDashboardStatsService = async (payload: any, res: Response) => {
-   
-    // const ongoingProjectCount = await projectsModel.countDocuments({status: { $ne: "1" } })
-    // const completedProjectCount = await projectsModel.countDocuments({status: "1" })
-    // const workingProjectDetails = await projectsModel.find({status: { $ne: "1" } }).select("projectName projectimageLink projectstartDate projectendDate status"); // Adjust the fields as needed
+    const currentDate = new Date();
+    
+    // Automatically get the current month and year
+    const targetMonth = currentDate.getMonth(); // Current month (0-based index)
+    const targetYear = currentDate.getFullYear(); // Current year
 
-    // const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7)) 
-    // const recentProjectDetails = await projectsModel.find({createdAt: { $gte: sevenDaysAgo } }).select("projectName projectimageLink projectstartDate projectendDate"); // Adjust the fields as needed
+    // Calculate the start and end date for the current month and year
+    const startOfMonthDate = new Date(targetYear, targetMonth, 1);
+    const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
+
+    // Get all bids for the current month and year
+    const bidsThisMonth = await bidModel.find({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    }).select("_id amount");
+
+    // Calculate the total amount of bids for the current month and year
+    const totalBidsAmountThisMonth = parseFloat(bidsThisMonth[0].amount);
+
+    // Count the total number of leads (responses) for the current month and year
+    const totalresponses = await leadModel.countDocuments({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    });
+
+    // Count the number of projects that have been hired for the current month and year
+    const projecthired = await leadModel.countDocuments({
+        statusId: "6763cd4d8584e9d88c92ab92",
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    });
+
+    // Calculate total earnings (either fixed price or hourly rate) for the current month and year
+    const totalearning = await leadModel.aggregate([
+        { 
+            $match: {
+                createdAt: {
+                    $gte: startOfMonthDate,
+                    $lte: endOfMonthDate
+                }
+            }
+        },
+        { 
+            $addFields: {
+                totalProjectEarnings: {
+                    $cond: {
+                        if: { $eq: ["$fixedprice", null] }, // If fixedprice is null (hourly project)
+                        then: { $multiply: ["$noofhours", "$costperhour"] }, // Calculate earnings based on hourly rate
+                        else: "$fixedprice" // Otherwise, use fixedprice
+                    }
+                }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalEarnings: { $sum: "$totalProjectEarnings" }
+            }
+        }
+    ]);
+
+    const totalEarnings = totalearning.length > 0 ? totalearning[0].totalEarnings : 0;
+
+    // Get projects created in the last 7 days (optional, as per your initial code)
+    const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7));
+    const recentProjectDetails = await leadModel.find({ 
+        createdAt: { $gte: sevenDaysAgo } 
+    })
+    .populate("userId", "fullName email")
+    .populate("platform", "name")
+    .populate("technology", "name")
+    .populate("createdby", "fullName email")
+    .populate("statusId", "name");
+
+    // Calculate response rate (number of bids / total responses) * 100
+    const responserate = totalBidsAmountThisMonth > 0 ? (totalresponses / totalBidsAmountThisMonth) * 100 : 0;
+
+    // Calculate hiring rate (number of projects hired / total responses) * 100
+    const hiringrate = totalresponses > 0 ? (projecthired / totalresponses) * 100 : 0;
+
+    // Prepare response data
+    const response = {
+        success: true,
+        message: "Dashboard stats fetched successfully",
+        data: {
+            responserate,
+            hiringrate,
+            bidsThisMonth,
+            totalresponses,
+            projecthired,
+            totalEarnings,
+            recentProjectDetails
+        }
+    };
+
+    return response;
+};
+
+
+
+
+
+export const createbidService = async (payload: any, res: Response) => {
+    const currentUserId = payload.currentUser
+
+    const project = await new bidModel({
+        ...payload,
+    }).save();
+
+    return {
+        success: true,
+        message: "Bid created successfully"
+        
+    }
+};
+
+
+
+export const updateABidService = async (id: string, payload: any, res: Response) => {
+    const biddata = await bidModel.findById(id);
+    if (!biddata) return errorResponseHandler("Data not found", httpStatusCode.NOT_FOUND, res);
  
-    // const response = {
-    //     success: true,
-    //     message: "Dashboard stats fetched successfully",
-    //     data: {
-    //       ongoingProjectCount,
-    //       completedProjectCount,
-    //       workingProjectDetails,
-    //       recentProjectDetails,
-    //     }
-    // }
+    const updateddata = await bidModel.findByIdAndUpdate(id,{ ...payload },{ new: true});
 
-    // return response
-}
+    return {
+        success: true,
+        message: "Data updated successfully",
+        data: updateddata,
+    };
+
+};
+
+export const dashboardOverviewstatservice = async (payload: any, res: Response) => {
+        // Get the month and year from the request payload (defaults to current month/year if not provided)
+        const { month, year } = payload; // Ensure the payload contains 'month' and 'year'
+
+        const currentDate = new Date();
+        
+        // If month or year is not provided, default to the current month and year
+        const targetMonth = month ? month - 1 : currentDate.getMonth(); // JavaScript months are 0-based
+        const targetYear = year ? year : currentDate.getFullYear();
+    
+        // Calculate the start and end date for the selected month and year
+        const startOfMonthDate = new Date(targetYear, targetMonth, 1);
+        const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
+    
+        // Get all bids for the selected month and year
+        const bidsThisMonth = await bidModel.find({
+            createdAt: {
+                $gte: startOfMonthDate,
+                $lte: endOfMonthDate
+            }
+        }).select("_id amount");
+    
+
+        // Count the total number of leads (responses) for the selected month and year
+        const totalresponses = await leadModel.countDocuments({
+            createdAt: {
+                $gte: startOfMonthDate,
+                $lte: endOfMonthDate
+            }
+        });
+    
+        // Count the number of projects that have been hired for the selected month and year
+        const projecthired = await leadModel.countDocuments({
+            statusId: "6763cd4d8584e9d88c92ab92",
+            createdAt: {
+                $gte: startOfMonthDate,
+                $lte: endOfMonthDate
+            }
+        });
+    
+        // Calculate total earnings (either fixed price or hourly rate) for the selected month and year
+        const totalearning = await leadModel.aggregate([
+            { 
+                $match: {
+                    createdAt: {
+                        $gte: startOfMonthDate,
+                        $lte: endOfMonthDate
+                    }
+                }
+            },
+            { 
+                $addFields: {
+                    totalProjectEarnings: {
+                        $cond: {
+                            if: { $eq: ["$fixedprice", null] }, // If fixedprice is null (hourly project)
+                            then: { $multiply: ["$noofhours", "$costperhour"] }, // Calculate earnings based on hourly rate
+                            else: "$fixedprice" // Otherwise, use fixedprice
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalEarnings: { $sum: "$totalProjectEarnings" }
+                }
+            }
+        ]);
+    
+        const totalEarnings = totalearning.length > 0 ? totalearning[0].totalEarnings : 0;
+    
+    
+        // Prepare response data
+        const response = {
+            success: true,
+            message: "Dashboard overview stats fetched successfully",
+            data: {
+                bidsThisMonth,
+                totalresponses,
+                projecthired,
+                totalEarnings,
+   
+            }
+        };
+    
+        return response;
+};
+
+
+
+export const dashboardchartstatservice = async (payload: any, res: Response) => {
+
+    const { month, year } = payload; 
+    const currentDate = new Date();
+    const targetMonth = month ? month - 1 : currentDate.getMonth(); 
+    const targetYear = year ? year : currentDate.getFullYear();
+
+    const startOfMonthDate = new Date(targetYear, targetMonth, 1);
+    const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
+
+    // Get all bids for the selected month and year
+    const bidsThisMonth = await bidModel.find({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    }).select("_id amount");
+
+
+    // Count the total number of leads (responses) for the selected month and year
+    const totalresponses = await leadModel.countDocuments({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    });
+
+    // Count the number of projects that have been hired for the selected month and year
+    const projecthired = await leadModel.countDocuments({
+        statusId: "6763cd4d8584e9d88c92ab92",
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    });
+
+    const totalBidsAmountThisMonth = parseFloat(bidsThisMonth[0].amount);
+
+    // Calculate response rate (number of bids / total responses) * 100
+    const responserate = totalBidsAmountThisMonth > 0 ? (totalresponses / totalBidsAmountThisMonth) * 100 : 0;
+
+    // Calculate hiring rate (number of projects hired / total responses) * 100
+    const hiringrate = totalresponses > 0 ? (projecthired / totalresponses) * 100 : 0;
+
+
+
+    // Prepare response data
+    const response = {
+        success: true,
+        message: "Dashboard chart stats fetched successfully",
+        data: {
+            responserate,
+            hiringrate
+        }
+    };
+
+    return response;
+};
