@@ -36,9 +36,11 @@ const usersSchema = new Schema({
         type: String,
         default: null 
     },
-    technology:  {
-        type: Schema.Types.ObjectId, required: true, ref: "technologies"
-    },
+    technology: [{
+        type: Schema.Types.ObjectId, 
+        required: true, 
+        ref: "technologies"
+    }],
     address: { 
         type: String,
         default: null 

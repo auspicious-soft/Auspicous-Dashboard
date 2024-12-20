@@ -11,7 +11,7 @@ import { customAlphabet } from "nanoid"
 
 
 export const signupService = async (payload: any, res: Response) => {
-    const countryCode = "+45";
+    const countryCode = "+91";
     const emailExists  = await usersModel.findOne({ email: payload.email })
     if (emailExists ) return errorResponseHandler("Email already exists", httpStatusCode.BAD_REQUEST, res)
     const phoneExists = await usersModel.findOne({ phoneNumber: `${countryCode}${payload.phoneNumber}` });

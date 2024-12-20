@@ -118,5 +118,30 @@ export const getALeadService = async (id: string, res: Response) => {
 
 
 
+  export const updateALeadService = async (id: string, payload: any, res: Response) => {
+    const lead = await leadModel.findById(id);
+    if (!lead) return errorResponseHandler("Lead not found", httpStatusCode.NOT_FOUND, res);
+    const updatedlead = await leadModel.findByIdAndUpdate(id,{ ...payload },{ new: true});
 
+    return {
+        success: true,
+        message: "Lead updated successfully",
+        data: updatedlead,
+    };
 
+};
+
+export const getStatusService = async (payload: any, res: Response) => {
+   
+    const status = await statusModel.find({});
+
+    const response = {
+        success: true,
+        message: "Status fetched successfully",
+        data: {
+          status
+        }
+    }
+
+    return response
+}

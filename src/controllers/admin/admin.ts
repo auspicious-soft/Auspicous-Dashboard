@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { formatZodErrors } from "../../validation/format-zod-errors";
-import { loginService, newPassswordAfterOTPVerifiedService, forgotPasswordService, getAllUsersService, getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService, createbidService, updateABidService, dashboardOverviewstatservice, dashboardchartstatservice} from "../../services/admin/admin-service";
+import { loginService, newPassswordAfterOTPVerifiedService, forgotPasswordService, getAllUsersService, getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService, createbidService, updateABidService, dashboardOverviewstatservice, dashboardchartstatservice,getAllusertechService, gettargetDashboardstatsService, createtargetService, updatetargetService} from "../../services/admin/admin-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { z } from "zod";
@@ -131,6 +131,48 @@ export const dashboardOverviewstat = async (req: Request, res: Response) => {
 export const dashboardchartstat = async (req: Request, res: Response) => {
     try {
         const response = await dashboardchartstatservice({currentUser : (req as any).currentUser, ...req.body}, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+
+export const getAllusertech = async (req: Request, res: Response) => {
+    try {
+        const response = await getAllusertechService(req.query)
+        return res.status(httpStatusCode.OK).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+export const gettargetDashboardstats = async (req: Request, res: Response) => {
+    try {
+        const response = await gettargetDashboardstatsService(req, res)
+        return res.status(httpStatusCode.OK).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+export const createtarget = async (req: Request, res: Response) => {
+    try {
+        const response = await createtargetService({currentUser : (req as any).currentUser, ...req.body}, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+
+export const updatetarget = async (req: Request, res: Response) => {
+    try {
+        const response = await updatetargetService({currentUser : (req as any).currentUser, ...req.body}, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)

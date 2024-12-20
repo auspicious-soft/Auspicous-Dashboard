@@ -491,3 +491,411 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
 
     return response;
 };
+
+
+export const getAllusertechService = async (payload: any) => {
+    const currentDate = new Date();
+    const targetMonth = currentDate.getMonth();
+    const targetYear = currentDate.getFullYear();
+
+       // Format the current date to 'YYYY-MM-DD'
+       const fulldate = currentDate.toISOString().split('T')[0];
+
+    const startOfMonthDate = new Date(targetYear, targetMonth, 1);
+    const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
+
+    // Fetch users with populated technology data
+    const users = await usersModel.find().populate("technology", "name _id");
+
+    // Fetch targets for the current month
+    const targets = await targetModel.find({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    });
+
+    // Initialize the response structure
+    const groupedUsers: Record<string, any[]> = {};
+
+    // Group users by technology names
+    users.forEach(user => {
+        user.technology.forEach((tech: any) => {
+            const techName = tech.name;
+            const techId = tech._id; // Get the technology ID
+
+            // Filter user's targets for the current month
+            const userTargets = targets.filter(
+                target => target.userId.toString() === user._id.toString() &&
+                          target.technologyId.toString() === techId.toString()
+            );
+
+            // Calculate targetAmount and retrieve the latest date for this user-technology combination
+            const targetAmount = userTargets.reduce((sum, target) => sum + parseFloat(target.targetAmount || '0'), 0); // Handle null or undefined targetAmount
+            const targetDate = userTargets.length > 0 ? userTargets[0].date : null; // Take the date of the first target (or null if no targets)
+
+            if (!groupedUsers[techName]) {
+                groupedUsers[techName] = [];
+            }
+
+            // Push user data with technology ID and target date
+            groupedUsers[techName].push({
+                userId: user._id,
+                fullName: user.fullName,
+                targetAmount: targetAmount || 0, // Ensure targetAmount is not null
+                technologyId: techId, // Add technology ID here
+                targetDate: targetDate // Add date of the target
+            });
+        });
+    });
+
+    const response = {
+        success: true,
+        message: "Users grouped by technologies with targets fetched successfully",
+        fulldate,
+        groupedUsers
+    };
+
+    return response;
+};
+
+
+
+
+// export const getAllusertechService = async (payload: any) => {
+
+//         const currentDate = new Date();
+//         const targetMonth = currentDate.getMonth(); 
+//         const targetYear = currentDate.getFullYear();
+
+//         const startOfMonthDate = new Date(targetYear, targetMonth, 1);
+//         const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
+
+//         // Fetch users with populated technology data
+//         const users = await usersModel.find().populate("technology", "name");
+
+//         // Fetch targets for the current month
+//         const targets = await targetModel.find({
+//             createdAt: {
+//                 $gte: startOfMonthDate,
+//                 $lte: endOfMonthDate
+//             }
+//         });
+
+//         // Initialize the response structure
+//         const groupedUsers: Record<string, any[]> = {};
+//         const technologyTotals: Record<string, number> = {};
+//         let grandTotal = 0;
+
+//         // Group users by technology names and calculate targets
+//         users.forEach(user => {
+//             user.technology.forEach((tech: any) => {
+//                 const techName = tech.name;
+
+//                 // Filter user's targets for the current month
+//                 const userTargets = targets.filter(
+//                     target => target.userId.toString() === user._id.toString() &&
+//                               target.technologyId.toString() === tech._id.toString()
+//                 );
+
+//                 const targetAmount = userTargets.reduce((sum, target) => sum + parseFloat(target.targetamount), 0);
+
+//                 // Initialize tech group if not exists
+//                 if (!groupedUsers[techName]) {
+//                     groupedUsers[techName] = [];
+//                     technologyTotals[techName] = 0;
+//                 }
+
+//                 // Add user details and target amount
+//                 groupedUsers[techName].push({
+//                     _id: user._id,
+//                     fullName: user.fullName,
+//                     targetAmount
+//                 });
+
+//                 // Update tech and grand totals
+//                 technologyTotals[techName] += targetAmount;
+//                 grandTotal += targetAmount;
+//             });
+//         });
+
+//         const response = {
+//             success: true,
+//             message: "Users grouped by technologies with targets fetched successfully",
+//             data: {
+//                 groupedUsers,
+//                 technologyTotals,
+//                 grandTotal
+//             }
+//         };
+
+//         return response;
+
+    
+// };
+
+export const createtargetService = async (payload: any, res: Response) => {
+    const currentUserId = payload.currentUser;
+    const currentDate = new Date();
+
+    // Format the current date to 'YYYY-MM-DD'
+    const formattedDate = currentDate.toISOString().split('T')[0];
+    // Extract targets from the payload (skip the `currentUser` field)
+    const targets = Object.values(payload).filter(item => item.userId);
+
+    // Add the `date` to each target
+    const targetsWithDate = targets.map(target => ({
+        ...target,
+        date: formattedDate
+    }));
+
+    // Insert all targets at once using insertMany
+    await targetModel.insertMany(targetsWithDate);
+
+    // Return a success response
+    return {
+        success: true,
+        message: "Targets created successfully"
+    };
+};
+
+
+export const updatetargetService = async (payload: any, res: Response) => {
+    const currentUserId = payload.currentUser;
+    const { targets } = payload; 
+
+    const bulkOps = targets.map(target => ({
+        updateOne: {
+            filter: {
+                userId: target.userId,        
+                technologyId: target.technologyId,   
+                date: target.targetDate               
+            },
+            update: {
+                $set: { targetAmount: target.targetAmount }  
+            },
+            upsert: false 
+        }
+    }));
+
+    const result = await targetModel.bulkWrite(bulkOps);
+
+    return {
+        success: true,
+        message: "targets updated successfully"
+    };
+};
+
+
+export const gettargetDashboardstatsService = async (payload: any, res: Response) => {
+    const currentDate = new Date();
+    const targetMonth = currentDate.getMonth(); 
+    const targetYear = currentDate.getFullYear(); 
+    const startOfMonthDate = new Date(targetYear, targetMonth, 1);
+    const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
+
+    // Step 1: Fetch all technologies
+    const allTechnologies = await technologyModel.find(); // Assuming status 0 means active
+console.log("tech",allTechnologies)
+
+    const technologyNames = allTechnologies.reduce((acc, tech) => {
+        acc[tech.name] = 0; // Initialize earnings to 0 for all technologies
+        return acc;
+    }, {});
+
+    console.log("technologyNames",technologyNames)
+
+    // Step 2: Calculate total earnings per technology
+    const totalEarningsPerTechnology = await leadModel.aggregate([
+        {
+            $match: {
+                createdAt: {
+                    $gte: startOfMonthDate,
+                    $lte: endOfMonthDate
+                }
+            }
+        },
+        {
+            $addFields: {
+                totalProjectEarnings: {
+                    $cond: {
+                        if: { $eq: ["$fixedprice", null] }, // If it's hourly, calculate based on hours and cost
+                        then: { $multiply: ["$noofhours", "$costperhour"] },
+                        else: "$fixedprice" // If it's fixed price, use that value
+                    }
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: "technologies",
+                localField: "technology",
+                foreignField: "_id",
+                as: "technologyDetails"
+            }
+        },
+        {
+            $unwind: "$technologyDetails"
+        },
+        {
+            $group: {
+                _id: "$technology",
+                totalEarnings: { $sum: "$totalProjectEarnings" },
+                technologyName: { $first: "$technologyDetails.name" }
+            }
+        }
+    ]);
+
+
+
+    // Step 3: Merge earnings per technology with the full list of technologies (with 0 for missing ones)
+    const earningsByTechnology = totalEarningsPerTechnology.reduce((acc, techEarnings) => {
+        const techName = techEarnings.technologyName || 'Unknown Technology'; // Handle case if name is null
+        acc[techName] = techEarnings.totalEarnings;
+        return acc;
+    }, {});
+
+        // Step 4: Ensure all technologies are included, even if no earnings
+        const mergedEarnings = { ...technologyNames, ...earningsByTechnology };
+
+
+        
+        const totalTargetPerTechnology = await targetModel.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: startOfMonthDate,
+                        $lte: endOfMonthDate
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: "technologies",
+                    localField: "technologyId",  // Match with the correct field name in your schema
+                    foreignField: "_id",
+                    as: "technologyDetails"
+                }
+            },
+            {
+                $unwind: "$technologyDetails"  // Unwind the result of the lookup to get individual technology data
+            },
+            {
+                $group: {
+                    _id: "$technologyId",  // Group by technologyId
+                    totalTargetAmount: { $sum: { $toDouble: "$targetAmount" } },  // Summing the targetAmount after converting it to number
+                    technologyName: { $first: "$technologyDetails.name" }  // Get the technology name
+                }
+            }
+        ]);
+        
+        // Step 3: Merge target amounts per technology with the full list of technologies (with 0 for missing ones)
+        const TargetByTechnology = totalTargetPerTechnology.reduce((acc, techData) => {
+            const techName = techData.technologyName || 'Unknown Technology';  // Handle case if name is null
+            acc[techName] = techData.totalTargetAmount;
+            return acc;
+        }, {});
+        
+        // Merge the earnings with technology names
+        const targetamount = { ...technologyNames, ...TargetByTechnology };
+        
+
+    // Calculate total earnings
+    const totalEarnings = Object.values(mergedEarnings).reduce((sum, earnings) => sum + earnings, 0);
+
+    // Step 5: Fetch total target amount
+    const targets = await targetModel.aggregate([
+        {
+            $match: {
+                createdAt: {
+                    $gte: startOfMonthDate,
+                    $lte: endOfMonthDate
+                }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalTargetAmount: { $sum: { $toDouble: "$targetAmount" } }
+            }
+        }
+    ]);
+
+    const totalTargetAmount = targets.length > 0 ? targets[0].totalTargetAmount : 0;
+
+    // Step 6: Calculate monthly target percentage
+    const monthlytargetstat = totalTargetAmount > 0 ? (totalEarnings / totalTargetAmount) * 100 : 0;
+
+    
+
+    // Fetch users with populated technology data
+const users = await usersModel.find().populate("technology", "name _id");
+
+// Fetch leads for the current month
+const leads = await leadModel.find({
+    createdAt: {
+        $gte: startOfMonthDate,
+        $lte: endOfMonthDate
+    }
+});
+
+// Initialize the response structure
+const groupedUsers = {};
+
+// Group users by technology names and calculate income
+users.forEach(user => {
+    user.technology.forEach(tech => {
+        const techName = tech.name;
+        const techId = tech._id;
+
+        // Filter user's leads for the current month
+        const userLeads = leads.filter(
+            lead => lead.userId.toString() === user._id.toString() &&
+                    lead.technology.toString() === techId.toString()
+        );
+
+        // Calculate total income from leads
+        const totalIncome = userLeads.reduce((sum, lead) => {
+            if (lead.contracttype === "Hourly") {
+                return sum + (lead.noofhours * lead.costperhour || 0);
+            } else if (lead.contracttype === "Fixed") {
+                return sum + (lead.fixedprice || 0);
+            }
+            return sum;
+        }, 0);
+
+        // Retrieve the latest lead date
+        const latestLeadDate = userLeads.length > 0 ? userLeads[0].date : null;
+
+        if (!groupedUsers[techName]) {
+            groupedUsers[techName] = [];
+        }
+
+        // Push user data with income and lead details
+        groupedUsers[techName].push({
+            userId: user._id,
+            fullName: user.fullName,
+            totalIncome: totalIncome || 0,
+            technologyId: techId
+        });
+    });
+});
+    // Step 7: Prepare the response
+    const response = {
+        success: true,
+        message: "Target Dashboard stats fetched successfully",
+        data: {
+            totalTargetAmount,
+            totalEarnings,
+            monthlytargetstat,
+            technologyEarnings: mergedEarnings, // Ensure all technologies, even with no earnings, are included
+            targetamount,
+            groupedUsers
+        }
+    };
+
+    return response;
+
+    
+};
+
