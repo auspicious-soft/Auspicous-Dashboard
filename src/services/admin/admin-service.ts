@@ -703,7 +703,7 @@ console.log("tech",allTechnologies)
         return acc;
     }, {});
 
-    console.log("technologyNames",technologyNames)
+    // console.log("technologyNames",technologyNames)
 
     // Step 2: Calculate total earnings per technology
     const totalEarningsPerTechnology = await leadModel.aggregate([
@@ -828,58 +828,58 @@ console.log("tech",allTechnologies)
 
     
 
-    // Fetch users with populated technology data
-const users = await usersModel.find().populate("technology", "name _id");
+        // Fetch users with populated technology data
+    const users = await usersModel.find().populate("technology", "name _id");
 
-// Fetch leads for the current month
-const leads = await leadModel.find({
-    createdAt: {
-        $gte: startOfMonthDate,
-        $lte: endOfMonthDate
-    }
-});
-
-// Initialize the response structure
-const groupedUsers = {};
-
-// Group users by technology names and calculate income
-users.forEach(user => {
-    user.technology.forEach(tech => {
-        const techName = tech.name;
-        const techId = tech._id;
-
-        // Filter user's leads for the current month
-        const userLeads = leads.filter(
-            lead => lead.userId.toString() === user._id.toString() &&
-                    lead.technology.toString() === techId.toString()
-        );
-
-        // Calculate total income from leads
-        const totalIncome = userLeads.reduce((sum, lead) => {
-            if (lead.contracttype === "Hourly") {
-                return sum + (lead.noofhours * lead.costperhour || 0);
-            } else if (lead.contracttype === "Fixed") {
-                return sum + (lead.fixedprice || 0);
-            }
-            return sum;
-        }, 0);
-
-        // Retrieve the latest lead date
-        const latestLeadDate = userLeads.length > 0 ? userLeads[0].date : null;
-
-        if (!groupedUsers[techName]) {
-            groupedUsers[techName] = [];
+    // Fetch leads for the current month
+    const leads = await leadModel.find({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
         }
+    });
 
-        // Push user data with income and lead details
-        groupedUsers[techName].push({
-            userId: user._id,
-            fullName: user.fullName,
-            totalIncome: totalIncome || 0,
-            technologyId: techId
+    // Initialize the response structure
+    const groupedUsers = {};
+
+    // Group users by technology names and calculate income
+    users.forEach(user => {
+        user.technology.forEach(tech => {
+            const techName = tech.name;
+            const techId = tech._id;
+
+            // Filter user's leads for the current month
+            const userLeads = leads.filter(
+                lead => lead.userId.toString() === user._id.toString() &&
+                        lead.technology.toString() === techId.toString()
+            );
+
+            // Calculate total income from leads
+            const totalIncome = userLeads.reduce((sum, lead) => {
+                if (lead.contracttype === "Hourly") {
+                    return sum + (lead.noofhours * lead.costperhour || 0);
+                } else if (lead.contracttype === "Fixed") {
+                    return sum + (lead.fixedprice || 0);
+                }
+                return sum;
+            }, 0);
+
+            // Retrieve the latest lead date
+            const latestLeadDate = userLeads.length > 0 ? userLeads[0].date : null;
+
+            if (!groupedUsers[techName]) {
+                groupedUsers[techName] = [];
+            }
+
+            // Push user data with income and lead details
+            groupedUsers[techName].push({
+                userId: user._id,
+                fullName: user.fullName,
+                totalIncome: totalIncome || 0,
+                technologyId: techId
+            });
         });
     });
-});
     // Step 7: Prepare the response
     const response = {
         success: true,
