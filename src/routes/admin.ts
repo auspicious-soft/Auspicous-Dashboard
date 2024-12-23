@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
     getDashboardStats, newPassswordAfterOTPVerified, createbid, updateAbid, dashboardOverviewstat,
     dashboardchartstat, getAllusertech, gettargetDashboardstats, createtarget, updatetarget, targetstat,
-    targetpercentstat,targetteamstat
+    targetpercentstat, targetteamstat, targetrevenuestat
 } from "../controllers/admin/admin";
 import { getleaddata, createlead, getAllleads, getAlead, updateAlead, getAllstatus } from "../controllers/lead/lead";
 // import { checkAdminAuth } from "../middleware/check-auth";
@@ -32,6 +32,7 @@ router.get("/target-dashboard", checkAuth, gettargetDashboardstats)
 router.route("/target-stat").post(checkAuth, targetstat)
 router.route("/target-percentage-stat").post(checkAuth, targetpercentstat)
 router.route("/target-team-earning-stat").post(checkAuth, targetteamstat)
+router.route("/target-revenue-stat").post(checkAuth, targetrevenuestat)
 
 router.route("/bid").post(checkAuth, createbid)
 router.route("/bid/:id").patch(checkAuth, updateAbid)

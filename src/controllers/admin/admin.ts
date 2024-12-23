@@ -5,7 +5,7 @@ import {
     getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService,
     createbidService, updateABidService, dashboardOverviewstatservice, dashboardchartstatservice,
     getAllusertechService, gettargetDashboardstatsService, createtargetService, updatetargetService,
-    targetstatservice,targetpercentstatservice,targetteamstatservice
+    targetstatservice, targetpercentstatservice, targetteamstatservice, targetrevenuestatservice
 
 } from "../../services/admin/admin-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
@@ -211,6 +211,16 @@ export const targetpercentstat = async (req: Request, res: Response) => {
 export const targetteamstat = async (req: Request, res: Response) => {
     try {
         const response = await targetteamstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+export const targetrevenuestat = async (req: Request, res: Response) => {
+    try {
+        const response = await targetrevenuestatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
