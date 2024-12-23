@@ -298,12 +298,12 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
         success: true,
         message: "Dashboard stats fetched successfully",
         data: {
-            responserate,
-            hiringrate,
             bidsThisMonth,
             totalresponses,
             projecthired,
             totalEarnings,
+            responserate,
+            hiringrate,
             recentProjectDetails
         }
     };
