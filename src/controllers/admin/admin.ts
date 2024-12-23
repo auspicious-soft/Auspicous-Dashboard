@@ -1,6 +1,13 @@
 import { Request, Response } from "express"
 import { formatZodErrors } from "../../validation/format-zod-errors";
-import { loginService, newPassswordAfterOTPVerifiedService, forgotPasswordService, getAllUsersService, getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService, createbidService, updateABidService, dashboardOverviewstatservice, dashboardchartstatservice,getAllusertechService, gettargetDashboardstatsService, createtargetService, updatetargetService} from "../../services/admin/admin-service";
+import {
+    loginService, newPassswordAfterOTPVerifiedService, forgotPasswordService, getAllUsersService,
+    getAUserService, updateAUserService, deleteAUserService, getDashboardStatsService,
+    createbidService, updateABidService, dashboardOverviewstatservice, dashboardchartstatservice,
+    getAllusertechService, gettargetDashboardstatsService, createtargetService, updatetargetService,
+    targetstatservice,targetpercentstatservice,targetteamstatservice
+
+} from "../../services/admin/admin-service";
 import { errorParser } from "../../lib/errors/error-response-handler";
 import { httpStatusCode } from "../../lib/constant";
 import { z } from "zod";
@@ -98,7 +105,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
 export const createbid = async (req: Request, res: Response) => {
     try {
-        const response = await createbidService({currentUser : (req as any).currentUser, ...req.body}, res)
+        const response = await createbidService({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -120,7 +127,7 @@ export const updateAbid = async (req: Request, res: Response) => {
 
 export const dashboardOverviewstat = async (req: Request, res: Response) => {
     try {
-        const response = await dashboardOverviewstatservice({currentUser : (req as any).currentUser, ...req.body}, res)
+        const response = await dashboardOverviewstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -130,7 +137,7 @@ export const dashboardOverviewstat = async (req: Request, res: Response) => {
 
 export const dashboardchartstat = async (req: Request, res: Response) => {
     try {
-        const response = await dashboardchartstatservice({currentUser : (req as any).currentUser, ...req.body}, res)
+        const response = await dashboardchartstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -141,7 +148,7 @@ export const dashboardchartstat = async (req: Request, res: Response) => {
 
 export const getAllusertech = async (req: Request, res: Response) => {
     try {
-        const response = await getAllusertechService(req.query)
+        const response = await getAllusertechService({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.OK).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -161,7 +168,7 @@ export const gettargetDashboardstats = async (req: Request, res: Response) => {
 
 export const createtarget = async (req: Request, res: Response) => {
     try {
-        const response = await createtargetService({currentUser : (req as any).currentUser, ...req.body}, res)
+        const response = await createtargetService({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -172,10 +179,43 @@ export const createtarget = async (req: Request, res: Response) => {
 
 export const updatetarget = async (req: Request, res: Response) => {
     try {
-        const response = await updatetargetService({currentUser : (req as any).currentUser, ...req.body}, res)
+        const response = await updatetargetService({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
         return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
     }
 }
+
+
+export const targetstat = async (req: Request, res: Response) => {
+    try {
+        const response = await targetstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+export const targetpercentstat = async (req: Request, res: Response) => {
+    try {
+        const response = await targetpercentstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+export const targetteamstat = async (req: Request, res: Response) => {
+    try {
+        const response = await targetteamstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        return res.status(httpStatusCode.CREATED).json(response)
+    } catch (error: any) {
+        const { code, message } = errorParser(error)
+        return res.status(code || httpStatusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: message || "An error occurred" });
+    }
+}
+
+
