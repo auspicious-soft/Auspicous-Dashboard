@@ -218,12 +218,14 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
     // Get all bids for the current month and year
-    const bidsThisMonth = await bidModel.find({
+    const bidsThisMonth = await bidModel.findOne({
         createdAt: {
             $gte: startOfMonthDate,
             $lte: endOfMonthDate
         }
     }).select("_id amount");
+
+    // console.log("bidsThisMonth",bidsThisMonth);
     
 
     // Calculate the total amount of bids for the current month and year
@@ -372,7 +374,7 @@ export const dashboardOverviewstatservice = async (payload: any, res: Response) 
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
     // Get all bids for the selected month and year
-    const bidsThisMonth = await bidModel.find({
+    const bidsThisMonth = await bidModel.findOne({
         createdAt: {
             $gte: startOfMonthDate,
             $lte: endOfMonthDate
@@ -462,7 +464,7 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
     // Get all bids for the selected month and year
-    const bidsThisMonth = await bidModel.find({
+    const bidsThisMonth = await bidModel.findOne({
         createdAt: {
             $gte: startOfMonthDate,
             $lte: endOfMonthDate
