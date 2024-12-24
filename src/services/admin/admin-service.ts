@@ -225,15 +225,11 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
         }
     }).select("_id amount");
 
-    // console.log("bidsThisMonth",bidsThisMonth);
-    
-
-    // Calculate the total amount of bids for the current month and year
   // Check if bidsThisMonth is not empty
 let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
-if (bidsThisMonth) {
+if (bidsThisMonth && bidsThisMonth.length > 0) {
     // Sum up all the amounts in the bids
-    totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || 0), 0);
+    totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || '0'), 0);
 }
 
     // Count the total number of leads (responses) for the current month and year
