@@ -224,9 +224,15 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
             $lte: endOfMonthDate
         }
     }).select("_id amount");
+    
 
     // Calculate the total amount of bids for the current month and year
-    const totalBidsAmountThisMonth = parseFloat(bidsThisMonth[0].amount);
+  // Check if bidsThisMonth is not empty
+let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
+if (bidsThisMonth.length > 0) {
+    // Sum up all the amounts in the bids
+    totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || 0), 0);
+}
 
     // Count the total number of leads (responses) for the current month and year
     const totalresponses = await leadModel.countDocuments({
