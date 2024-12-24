@@ -291,7 +291,9 @@ if (bidsThisMonth.length > 0) {
         .populate("platform", "name")
         .populate("technology", "name")
         .populate("createdby", "fullName email")
-        .populate("statusId", "name");
+        .populate("statusId", "name")
+        .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the most recent ones
+        .limit(10); // Limit the result to 10 projects
 
     // Calculate response rate (number of bids / total responses) * 100
     const responserate = totalBidsAmountThisMonth > 0 ? (totalresponses / totalBidsAmountThisMonth) * 100 : 0;
