@@ -231,7 +231,7 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     // Calculate the total amount of bids for the current month and year
   // Check if bidsThisMonth is not empty
 let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
-if (bidsThisMonth.length > 0) {
+if (bidsThisMonth) {
     // Sum up all the amounts in the bids
     totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || 0), 0);
 }
