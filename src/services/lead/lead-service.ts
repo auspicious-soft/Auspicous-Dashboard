@@ -65,6 +65,13 @@ export const getAllleadService = async (payload: any) => {
 
     let { query, sort } = queryBuilder(payload, ['4']); 
 
+      // Ensure the sorting is descending by a field (e.g., 'createdAt')
+      if (!sort || typeof sort !== 'object') {
+        sort = { createdAt: -1 }; // Replace 'createdAt' with your preferred field
+    } else {
+        // If there is already a sort object, ensure descending order
+        sort = { ...sort, createdAt: -1 }; // This adds descending order for 'createdAt'
+    }
     // Count total data
     const totalDataCount = Object.keys(query).length < 1
         ? await leadModel.countDocuments()
