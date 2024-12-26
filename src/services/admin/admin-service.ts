@@ -491,12 +491,15 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
     // Get all bids for the selected month and year
-    const bidsThisMonth = await bidModel.find({
-        createdAt: {
-            $gte: startOfMonthDate,
-            $lte: endOfMonthDate
-        }
-    }).select("_id amount");
+ const bidsThisMonth = await bidModel.findOne({
+    createdAt: {
+        $gte: startOfMonthDate,
+        $lte: endOfMonthDate
+    }
+}).select("_id amount");
+
+// console.log("bidsThisMonth", bidsThisMonth);
+
     
     // console.log("bidsThisMonth", bidsThisMonth);
     
@@ -535,6 +538,7 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
         success: true,
         message: "Dashboard chart stats fetched successfully",
         data: {
+            bidsThisMonth,
             responserate,
             hiringrate
         }
