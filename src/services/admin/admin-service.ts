@@ -219,7 +219,14 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
 
     // Get all bids for the current month and year
 
-const bidsThisMonth = await bidModel.findOne({
+const bidsThisMonth = await bidModel.find({
+    createdAt: {
+        $gte: startOfMonthDate,
+        $lte: endOfMonthDate
+    }
+}).select("_id amount");
+
+const bidsThisMonths = await bidModel.findOne({
     createdAt: {
         $gte: startOfMonthDate,
         $lte: endOfMonthDate
@@ -227,6 +234,17 @@ const bidsThisMonth = await bidModel.findOne({
 }).select("_id amount");
 
 // console.log("bidsThisMonth", bidsThisMonth);
+
+
+// Check if bidsThisMonth is not empty
+let totalBidsAmountThisMonths = 0; // Default to 0 if no bids exist
+if (bidsThisMonths && bidsThisMonths.length > 0) {
+    // Sum up all the amounts in the bids
+    totalBidsAmountThisMonths = bidsThisMonths.reduce((total, bid) => total + parseFloat(bid.amount || '0'), 0);
+}
+
+
+
 
 // Check if bidsThisMonth is not empty
 let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
@@ -317,7 +335,7 @@ if (bidsThisMonth && bidsThisMonth.length > 0) {
         success: true,
         message: "Dashboard stats fetched successfully",
         data: {
-            bidsThisMonth,
+            bidsThisMonths,
             totalresponses,
             projecthired,
             totalEarnings,
