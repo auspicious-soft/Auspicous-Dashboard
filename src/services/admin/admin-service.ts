@@ -865,43 +865,63 @@ export const gettargetDashboardstatsService = async (payload: any, res: Response
     const groupedUsers = {};
 
     // Group users by technology names and calculate income
-    users.forEach(user => {
-        user.technology.forEach(tech => {
-            const techName = tech.name;
-            const techId = tech._id;
+   // Group users by technology names and calculate daily earnings
+users.forEach(user => {
+    user.technology.forEach(tech => {
+        const techName = tech.name;
+        const techId = tech._id;
 
-            // Filter user's leads for the current month
-            const userLeads = leads.filter(
-                lead => lead.userId.toString() === user._id.toString() &&
-                    lead.technology.toString() === techId.toString()
-            );
+        // Filter user's leads for the current month
+        const userLeads = leads.filter(
+            lead => lead.userId.toString() === user._id.toString() &&
+                lead.technology.toString() === techId.toString()
+        );
 
-            // Calculate total income from leads
-            const totalIncome = userLeads.reduce((sum, lead) => {
-                if (lead.contracttype === "Hourly") {
-                    return sum + (lead.noofhours * lead.costperhour || 0);
-                } else if (lead.contracttype === "Fixed") {
-                    return sum + (lead.fixedprice || 0);
-                }
-                return sum;
-            }, 0);
-
-            // Retrieve the latest lead date
-            const latestLeadDate = userLeads.length > 0 ? userLeads[0].date : null;
-
-            if (!groupedUsers[techName]) {
-                groupedUsers[techName] = [];
+        // Group earnings by day for each lead
+        const dailyEarnings = userLeads.reduce((acc, lead) => {
+            // Calculate earnings for the day
+            let earning = 0;
+            if (lead.contracttype === "Hourly") {
+                earning = lead.noofhours * lead.costperhour || 0;
+            } else if (lead.contracttype === "Fixed") {
+                earning = lead.fixedprice || 0;
             }
 
-            // Push user data with income and lead details
-            groupedUsers[techName].push({
-                userId: user._id,
-                fullName: user.fullName,
-                totalIncome: totalIncome || 0,
-                technologyId: techId
-            });
+            // Ensure lead.date is a valid Date object
+            let leadDate = new Date(lead.date);
+            if (isNaN(leadDate.getTime())) {
+                // If not a valid date, use a default fallback (e.g., current date)
+                leadDate = new Date(); // Or handle it differently based on your requirements
+            }
+
+            // Get the date in YYYY-MM-DD format
+            const leadDateString = leadDate.toISOString().split('T')[0];
+
+            // If the lead date is not already in the accumulator, initialize it
+            if (!acc[leadDateString]) {
+                acc[leadDateString] = 0;
+            }
+
+            // Add earnings to the corresponding day
+            acc[leadDateString] += earning;
+
+            return acc;
+        }, {});
+
+        if (!groupedUsers[techName]) {
+            groupedUsers[techName] = [];
+        }
+
+        // Push user data with daily earnings
+        groupedUsers[techName].push({
+            userId: user._id,
+            fullName: user.fullName,
+            dailyEarnings: dailyEarnings, // Now storing daily earnings
+            technologyId: techId
         });
     });
+});
+
 
 
     // Step 7: Prepare the response
