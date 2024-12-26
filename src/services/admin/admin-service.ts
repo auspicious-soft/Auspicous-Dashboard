@@ -490,18 +490,32 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
     const startOfMonthDate = new Date(targetYear, targetMonth, 1);
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
-    // Get all bids for the selected month and year
- const bidsThisMonth = await bidModel.findOne({
-    createdAt: {
-        $gte: startOfMonthDate,
-        $lte: endOfMonthDate
-    }
-}).select("_id amount");
-
-// console.log("bidsThisMonth", bidsThisMonth);
-
+    const bidsThisMonth = await bidModel.find({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    }).select("_id amount");
+    
+    const bidsThisMonths = await bidModel.findOne({
+        createdAt: {
+            $gte: startOfMonthDate,
+            $lte: endOfMonthDate
+        }
+    }).select("_id amount");
     
     // console.log("bidsThisMonth", bidsThisMonth);
+    
+    
+    // Check if bidsThisMonth is not empty
+    let totalBidsAmountThisMonths = 0; // Default to 0 if no bids exist
+    if (bidsThisMonths && bidsThisMonths.length > 0) {
+        // Sum up all the amounts in the bids
+        totalBidsAmountThisMonths = bidsThisMonths.reduce((total, bid) => total + parseFloat(bid.amount || '0'), 0);
+    }
+    
+    
+    
     
     // Check if bidsThisMonth is not empty
     let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
@@ -509,7 +523,6 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
         // Sum up all the amounts in the bids
         totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || '0'), 0);
     }
-
     // Count the total number of leads (responses) for the selected month and year
     const totalresponses = await leadModel.countDocuments({
         createdAt: {
@@ -538,7 +551,7 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
         success: true,
         message: "Dashboard chart stats fetched successfully",
         data: {
-            bidsThisMonth,
+            bidsThisMonths,
             responserate,
             hiringrate
         }
