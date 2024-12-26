@@ -127,7 +127,16 @@ export const updateAbid = async (req: Request, res: Response) => {
 
 export const dashboardOverviewstat = async (req: Request, res: Response) => {
     try {
-        const response = await dashboardOverviewstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+       const { month, year } = req.query;
+
+        const response = await dashboardOverviewstatservice(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -137,7 +146,16 @@ export const dashboardOverviewstat = async (req: Request, res: Response) => {
 
 export const dashboardchartstat = async (req: Request, res: Response) => {
     try {
-        const response = await dashboardchartstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        const { month, year } = req.query;
+
+        const response = await dashboardchartstatservice(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -190,7 +208,16 @@ export const updatetarget = async (req: Request, res: Response) => {
 
 export const targetstat = async (req: Request, res: Response) => {
     try {
-        const response = await targetstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        const { month, year } = req.query;
+
+        const response = await targetstatservice(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -200,7 +227,18 @@ export const targetstat = async (req: Request, res: Response) => {
 
 export const targetpercentstat = async (req: Request, res: Response) => {
     try {
-        const response = await targetpercentstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+
+        const { month, year } = req.query;
+
+        const response = await targetpercentstatservice(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
+        
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -210,7 +248,17 @@ export const targetpercentstat = async (req: Request, res: Response) => {
 
 export const targetteamstat = async (req: Request, res: Response) => {
     try {
-        const response = await targetteamstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        // const response = await targetteamstatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        const { month, year } = req.query;
+
+        const response = await targetteamstatservice(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
@@ -220,7 +268,18 @@ export const targetteamstat = async (req: Request, res: Response) => {
 
 export const targetrevenuestat = async (req: Request, res: Response) => {
     try {
-        const response = await targetrevenuestatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
+        const { month, year } = req.query;
+
+        const response = await targetrevenuestatservice(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
+        
+        // const response = await targetrevenuestatservice({ currentUser: (req as any).currentUser, ...req.body }, res)
         return res.status(httpStatusCode.CREATED).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)

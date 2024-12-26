@@ -335,12 +335,12 @@ if (bidsThisMonth && bidsThisMonth.length > 0) {
         success: true,
         message: "Dashboard stats fetched successfully",
         data: {
-            bidsThisMonths,
-            totalresponses,
-            projecthired,
-            totalEarnings,
-            responserate,
-            hiringrate,
+            // bidsThisMonths,
+            // totalresponses,
+            // projecthired,
+            // totalEarnings,
+            // responserate,
+            // hiringrate,
             recentProjectDetails
         }
     };
