@@ -219,7 +219,7 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
 
     // Get all bids for the current month and year
 
-const bidsThisMonth = await bidModel.find({
+const bidsThisMonth = await bidModel.findOne({
     createdAt: {
         $gte: startOfMonthDate,
         $lte: endOfMonthDate
