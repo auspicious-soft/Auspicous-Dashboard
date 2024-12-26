@@ -218,19 +218,24 @@ export const getDashboardStatsService = async (payload: any, res: Response) => {
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
     // Get all bids for the current month and year
-    const bidsThisMonth = await bidModel.findOne({
-        createdAt: {
-            $gte: startOfMonthDate,
-            $lte: endOfMonthDate
-        }
-    }).select("_id amount");
 
-  // Check if bidsThisMonth is not empty
+const bidsThisMonth = await bidModel.find({
+    createdAt: {
+        $gte: startOfMonthDate,
+        $lte: endOfMonthDate
+    }
+}).select("_id amount");
+
+// console.log("bidsThisMonth", bidsThisMonth);
+
+// Check if bidsThisMonth is not empty
 let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
 if (bidsThisMonth && bidsThisMonth.length > 0) {
     // Sum up all the amounts in the bids
     totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || '0'), 0);
 }
+
+// console.log("totalBidsAmountThisMonth", totalBidsAmountThisMonth);
 
     // Count the total number of leads (responses) for the current month and year
     const totalresponses = await leadModel.countDocuments({
@@ -239,6 +244,8 @@ if (bidsThisMonth && bidsThisMonth.length > 0) {
             $lte: endOfMonthDate
         }
     });
+
+   
 
     // Count the number of projects that have been hired for the current month and year
     const projecthired = await leadModel.countDocuments({
@@ -293,8 +300,14 @@ if (bidsThisMonth && bidsThisMonth.length > 0) {
         .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the most recent ones
         .limit(10); // Limit the result to 10 projects
 
+        // console.log("totalresponses",totalresponses);
+
+        // console.log("totalBidsAmountThisMonth",totalBidsAmountThisMonth);
+
     // Calculate response rate (number of bids / total responses) * 100
     const responserate = totalBidsAmountThisMonth > 0 ? (totalresponses / totalBidsAmountThisMonth) * 100 : 0;
+
+    // console.log("responserate",responserate);
 
     // Calculate hiring rate (number of projects hired / total responses) * 100
     const hiringrate = totalresponses > 0 ? (projecthired / totalresponses) * 100 : 0;
@@ -460,15 +473,21 @@ export const dashboardchartstatservice = async (payload: any, res: Response) => 
     const endOfMonthDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59); // End of the month
 
     // Get all bids for the selected month and year
-    const bidsThisMonth = await bidModel.findOne({
+    const bidsThisMonth = await bidModel.find({
         createdAt: {
             $gte: startOfMonthDate,
             $lte: endOfMonthDate
         }
     }).select("_id amount");
-
-    // Calculate totalBidsAmountThisMonth safely
-    const totalBidsAmountThisMonth = bidsThisMonth.length > 0 ? parseFloat(bidsThisMonth[0].amount) : 0;
+    
+    // console.log("bidsThisMonth", bidsThisMonth);
+    
+    // Check if bidsThisMonth is not empty
+    let totalBidsAmountThisMonth = 0; // Default to 0 if no bids exist
+    if (bidsThisMonth && bidsThisMonth.length > 0) {
+        // Sum up all the amounts in the bids
+        totalBidsAmountThisMonth = bidsThisMonth.reduce((total, bid) => total + parseFloat(bid.amount || '0'), 0);
+    }
 
     // Count the total number of leads (responses) for the selected month and year
     const totalresponses = await leadModel.countDocuments({
