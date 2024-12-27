@@ -1532,81 +1532,100 @@ export const targetrevenuestatservice = async (payload: any, res: Response) => {
     // Fetch users with populated technology data
     const users = await usersModel.find().populate("technology", "name _id");
 
-    // Fetch leads for the current month
+    const technologies = await technologyModel.find({}, "name _id");
     const leads = await leadModel.find({
         createdAt: {
             $gte: startOfMonthDate,
-            $lte: endOfMonthDate
-        }
+            $lte: endOfMonthDate,
+        },
     });
-
-    // Initialize the response structure
-    const groupedUsers = {};
-
-    // Group users by technology names and calculate income
-   // Group users by technology names and calculate daily earnings
-users.forEach(user => {
-    user.technology.forEach(tech => {
+    
+    // Initialize the response structure: teams by technology
+    const teams = {};
+    
+    // Create teams based on technologies
+    for (const tech of technologies) {
+        const techId = tech._id.toString();
         const techName = tech.name;
-        const techId = tech._id;
-
-        // Filter user's leads for the current month
-        const userLeads = leads.filter(
-            lead => lead.userId.toString() === user._id.toString() &&
-                lead.technology.toString() === techId.toString()
+    
+        // Initialize team for this technology
+        if (!teams[techName]) {
+            teams[techName] = {
+                members: [],
+            };
+        }
+    
+        // Filter leads for this technology
+        const leadsForTechnology = leads.filter(
+            (lead) => lead.technology.toString() === techId
         );
-
-        // Group earnings by day for each lead
-        const dailyEarnings = userLeads.reduce((acc, lead) => {
-            // Calculate earnings for the day
+    
+        // Group leads by user ID and calculate their earnings
+        const userEarningsMap = leadsForTechnology.reduce((acc, lead) => {
+            const userId = lead.userId.toString();
+    
+            // Initialize user's earnings if not already present
+            if (!acc[userId]) {
+                acc[userId] = {
+                    userId,
+                    dailyEarnings: {},
+                    totalEarnings: 0,
+                };
+            }
+    
+            // Calculate earnings for the lead
             let earning = 0;
             if (lead.contracttype === "Hourly") {
-                earning = lead.noofhours * lead.costperhour || 0;
+                earning = (lead.noofhours || 0) * (lead.costperhour || 0);
             } else if (lead.contracttype === "Fixed") {
                 earning = lead.fixedprice || 0;
             }
-
-            // Ensure lead.date is a valid Date object
-            let leadDate = new Date(lead.createdAt);
-            if (isNaN(leadDate.getTime())) {
-                // If not a valid date, use a default fallback (e.g., current date)
-                leadDate = new Date(); // Or handle it differently based on your requirements
-            }
-
-            // Get the date in YYYY-MM-DD format
-            const leadDateString = leadDate.toISOString().split('T')[0];
-
-            // If the lead date is not already in the accumulator, initialize it
-            if (!acc[leadDateString]) {
-                acc[leadDateString] = 0;
-            }
-
+    
+            // Parse the lead creation date into YYYY-MM-DD format
+            const leadDate = new Date(lead.createdAt);
+            const leadDateString = isNaN(leadDate.getTime())
+                ? new Date().toISOString().split("T")[0]
+                : leadDate.toISOString().split("T")[0];
+    
             // Add earnings to the corresponding day
-            acc[leadDateString] += earning;
-
+            if (!acc[userId].dailyEarnings[leadDateString]) {
+                acc[userId].dailyEarnings[leadDateString] = 0;
+            }
+            acc[userId].dailyEarnings[leadDateString] += earning;
+    
+            // Update the total earnings
+            acc[userId].totalEarnings += earning;
+    
             return acc;
         }, {});
-
-        if (!groupedUsers[techName]) {
-            groupedUsers[techName] = [];
-        }
-
-        // Push user data with daily earnings
-        groupedUsers[techName].push({
-            userId: user._id,
-            fullName: user.fullName,
-            dailyEarnings: dailyEarnings, // Now storing daily earnings
-            technologyId: techId
+    
+        // Fetch user names for all user IDs in this technology group
+        const userIds = Object.keys(userEarningsMap);
+        const users = await usersModel.find(
+            { _id: { $in: userIds } },
+            "fullName _id"
+        );
+    
+        // Map user names to the user earnings data
+        users.forEach((user) => {
+            if (userEarningsMap[user._id.toString()]) {
+                userEarningsMap[user._id.toString()].fullName = user.fullName;
+            }
         });
-    });
-});
+    
+        // Add all users with their earnings and names to the team
+        teams[techName].members = Object.values(userEarningsMap);
+    }
+    
+ 
+    
 
     // Step 7: Prepare the response
     const response = {
         success: true,
         message: "Target Revenue stats fetched successfully",
         data: {
-            groupedUsers
+            groupedUsers:teams
         }
     };
 
