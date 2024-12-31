@@ -166,7 +166,17 @@ export const dashboardchartstat = async (req: Request, res: Response) => {
 
 export const getAllusertech = async (req: Request, res: Response) => {
     try {
-        const response = await getAllusertechService({ currentUser: (req as any).currentUser, ...req.body }, res)
+        // const response = await getAllusertechService({ currentUser: (req as any).currentUser, ...req.body }, res)
+        const { month, year } = req.query;
+
+        const response = await getAllusertechService(
+            { 
+                currentUser: (req as any).currentUser,
+                month: month ? parseInt(month as string) : undefined, 
+                year: year ? parseInt(year as string) : undefined 
+            }, 
+            res
+        );
         return res.status(httpStatusCode.OK).json(response)
     } catch (error: any) {
         const { code, message } = errorParser(error)
